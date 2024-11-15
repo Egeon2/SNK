@@ -1,7 +1,7 @@
 from random import randint
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-import random
+import random ХУЙ
 import numpy as np
 from matplotlib.animation import FuncAnimation
 
