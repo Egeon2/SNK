@@ -168,30 +168,132 @@ class Cell:
         return new_grid
 
 
-# Визуализация сетки
-grid_size = 100  # Размер сетки
+# Размер сетки
+grid_size = 100  # Устанавливаем размер сетки 10x10
 grid = np.zeros((grid_size, grid_size))  # Инициализация пустой сетки (0 - пустое место)
 
-# Размещение клеток на сетке
-recipient_cell = Cell(
-    dna="основная_ДНК_реципиента_гомологичный_участок",
-    comp_factor=3,
-    antibiotics=1,
-    coords_x=5,
-    coords_y=5,
-    conc_antibiotics=15  # Высокая концентрация антибиотика
-)
+# Функция для генерации случайных координат
+def generate_random_coords(grid_size, count):
+    return [(random.randint(0, grid_size - 1), random.randint(0, grid_size - 1)) for _ in range(count)]
 
-# Добавляем донорные клетки
-donor_cells = [
-    Cell(dna="донорная_ДНК1", comp_factor=0, antibiotics=0, coords_x=3, coords_y=3, conc_antibiotics=0),
-    Cell(dna="донорная_ДНК2_гомологичный_участок", comp_factor=0, antibiotics=0, coords_x=7, coords_y=7, conc_antibiotics=0)
-]
+# Функция для добавления клеток
+def add_cells(grid, cell_count, is_recipient=False):
+    cells = []
+    for _ in range(cell_count):
+        coords = generate_random_coords(grid_size, 1)[0]
+        dna = "реципиент_ДНК" if is_recipient else f"донорная_ДНК{random.randint(1, 10)}"
+        comp_factor = random.randint(0, 5) if is_recipient else 0
+        antibiotics = random.randint(0, 3)
+        conc_antibiotics = random.randint(0, 20) if is_recipient else 0
+        cell = {"dna": dna, "comp_factor": comp_factor, "antibiotics": antibiotics, "x": coords[0], "y": coords[1], "conc_antibiotics": conc_antibiotics}
+        cells.append(cell)
+        grid[coords[0], coords[1]] = 2 if is_recipient else 3  # 2 - реципиент, 3 - донор
+    return cells
 
-# Устанавливаем антибиотики
-antibiotic_coords = [(3, 3), (7, 7), (2, 8)]  # Пример координат для антибиотиков
-for x, y in antibiotic_coords:
-    grid[x][y] = 1  # 1 - означает антибиотик на клетке
+# Функция для добавления антибиотиков
+def add_antibiotics(grid, antibiotic_count):
+    antibiotic_coords = generate_random_coords(grid_size, antibiotic_count)
+    for x, y in antibiotic_coords:
+        grid[x][y] = 1  # 1 - антибиотик
+    return antibiotic_coords
 
-# Размещаем клетку
-grid[recipient_cell.coords_x][recipient_cell.coords_y] = 2  # 2 - означает клетку
+# Инициализация объектов на сетке
+recipient_cells = add_cells(grid, 500, is_recipient=True)
+donor_cells = add_cells(grid, 500)
+antibiotic_coords = add_antibiotics(grid, 500)
+
+# Настройка визуализации
+fig, ax = plt.subplots(figsize=(8, 8))
+cmap = plt.get_cmap("viridis")
+ax.set_title("Карта клеток и антибиотиков")
+im = ax.imshow(grid, cmap=cmap, interpolation='nearest')
+
+def update(frame):
+    global grid
+    new_grid = grid.copy()  # Копируем текущую сетку для обновлений
+
+    # Один шаг диффузии для антибиотиков 1, 2 и 3
+    for x in range(grid_size):
+        for y in range(grid_size):
+            if grid[x, y] == 1:  # Если в клетке есть антибиотик 1
+                possible_moves = []  # Список возможных направлений для движения антибиотика
+
+                # Проверка соседей (вверх, вниз, влево, вправо)
+                if x - 1 >= 0 and grid[x - 1, y] == 0:
+                    possible_moves.append((-1, 0))  # Вверх
+                if x + 1 < grid_size and grid[x + 1, y] == 0:
+                    possible_moves.append((1, 0))  # Вниз
+                if y - 1 >= 0 and grid[x, y - 1] == 0:
+                    possible_moves.append((0, -1))  # Влево
+                if y + 1 < grid_size and grid[x, y + 1] == 0:
+                    possible_moves.append((0, 1))  # Вправо
+
+                # Если есть возможные движения, случайным образом выбрать одно
+                if possible_moves:
+                    dx, dy = random.choice(possible_moves)
+                    nx, ny = x + dx, y + dy
+
+                    # Дополнительная проверка на занятость клетки
+                    if new_grid[nx, ny] == 0:  # Проверка, что клетка пуста
+                        new_grid[nx, ny] = 1  # Перемещаем антибиотик в новую клетку
+                        new_grid[x, y] = 0  # Обнуляем старую клетку
+
+            elif grid[x, y] == 2:  # Если в клетке есть антибиотик 2
+                possible_moves = []  # Список возможных направлений для движения антибиотика
+
+                # Проверка соседей (вверх, вниз, влево, вправо)
+                if x - 1 >= 0 and grid[x - 1, y] == 0:
+                    possible_moves.append((-1, 0))  # Вверх
+                if x + 1 < grid_size and grid[x + 1, y] == 0:
+                    possible_moves.append((1, 0))  # Вниз
+                if y - 1 >= 0 and grid[x, y - 1] == 0:
+                    possible_moves.append((0, -1))  # Влево
+                if y + 1 < grid_size and grid[x, y + 1] == 0:
+                    possible_moves.append((0, 1))  # Вправо
+
+                # Если есть возможные движения, случайным образом выбрать одно
+                if possible_moves:
+                    dx, dy = random.choice(possible_moves)
+                    nx, ny = x + dx, y + dy
+
+                    # Дополнительная проверка на занятость клетки
+                    if new_grid[nx, ny] == 0:  # Проверка, что клетка пуста
+                        new_grid[nx, ny] = 2  # Перемещаем антибиотик в новую клетку
+                        new_grid[x, y] = 0  # Обнуляем старую клетку
+
+            elif grid[x, y] == 3:  # Если в клетке есть антибиотик 3
+                possible_moves = []  # Список возможных направлений для движения антибиотика
+
+                # Проверка соседей (вверх, вниз, влево, вправо)
+                if x - 1 >= 0 and grid[x - 1, y] == 0:
+                    possible_moves.append((-1, 0))  # Вверх
+                if x + 1 < grid_size and grid[x + 1, y] == 0:
+                    possible_moves.append((1, 0))  # Вниз
+                if y - 1 >= 0 and grid[x, y - 1] == 0:
+                    possible_moves.append((0, -1))  # Влево
+                if y + 1 < grid_size and grid[x, y + 1] == 0:
+                    possible_moves.append((0, 1))  # Вправо
+
+                # Если есть возможные движения, случайным образом выбрать одно
+                if possible_moves:
+                    dx, dy = random.choice(possible_moves)
+                    nx, ny = x + dx, y + dy
+
+                    # Дополнительная проверка на занятость клетки
+                    if new_grid[nx, ny] == 0:  # Проверка, что клетка пуста
+                        new_grid[nx, ny] = 3  # Перемещаем антибиотик в новую клетку
+                        new_grid[x, y] = 0  # Обнуляем старую клетку
+
+    # Обновляем сетку после выполнения всех шагов диффузии
+    grid = new_grid
+
+    # Обновляем визуализацию
+    im.set_data(grid)
+    plt.draw()  # Отрисовываем обновление
+    plt.pause(0.1)  # Пауза для обновления
+
+# Визуализация процесса с блокировкой
+for frame in range(100):
+    update(frame)
+
+plt.show()
