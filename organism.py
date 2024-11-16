@@ -1,11 +1,6 @@
-from random import randint
-from tqdm import tqdm
 import matplotlib.pyplot as plt
-import random
+from random import choice
 import numpy as np
-from matplotlib.animation import FuncAnimation
-
-nucleotides_dna = np.array(['A', 'T', 'G', 'C'])
 
 class Cell:
 
@@ -63,7 +58,7 @@ class Cell:
     def duplication(self, num_of_muts):
         temp_res = list(self.dna)
         position = np.random.randint(0, len(temp_res)-1)
-        temp_res[position] = np.random.choice(nucleotides_dna, num_of_muts)
+        temp_res[position] = choice(['A', 'T', 'G', 'C'], num_of_muts)
         dupl_dna = temp_res
         return temp_res, dupl_dna
 
@@ -230,7 +225,7 @@ def update(frame):
 
                 # Если есть возможные движения, случайным образом выбрать одно
                 if possible_moves:
-                    dx, dy = random.choice(possible_moves)
+                    dx, dy = choice(possible_moves)
                     nx, ny = x + dx, y + dy
 
                     # Дополнительная проверка на занятость клетки
